@@ -1,0 +1,87 @@
+---
+- name: Current OS version information
+  debug:
+    var: os_info
+  vars:
+    os_info:
+      distribution: "{{ ansible_distribution }}"
+      distribution_major_version: "{{ ansible_distribution_major_version }}"
+      distribution_release: "{{ ansible_distribution_release }}"
+      distribution_version: "{{ ansible_distribution_version }}"
+
+- name: Ensure deltarpm installed
+  yum:
+    name: deltarpm
+    state: latest
+
+- name: upgrade packages
+  become: yes
+  yum:
+    name: "{{ item }}"
+    exclude: "{{ upgrade_distpackages_excludes | join(',') }}"
+    state: latest
+    update_cache: yes
+  with_items: "{{ upgrade_distpackages | default('*') }}"
+
+- name: find the current running kernel version
+  command: uname -r
+  register: running_kernel_version
+  check_mode: no
+  changed_when: False
+
+- name: find the latest installed version of the kernel
+  shell: rpm -q kernel --qf '%{BUILDTIME} %{VERSION}-%{RELEASE}.%{ARCH}\n' | tail -n 1 | cut -f 2 -d ' '
+  register: latest_kernel_version
+  check_mode: no
+  changed_when: False
+  # Ignore ansible-lint warning about using rpm (this is just a query)
+  tags:
+  - skip_ansible_lint
+
+- name: check if reboot needed
+  set_fact:
+    system_reboot_needed: "{{ running_kernel_version.stdout != latest_kernel_version.stdout }}"
+
+- debug:
+    msg: "Reboot needed (kernel): Current:{{ running_kernel_version.stdout }} Latest:{{ latest_kernel_version.stdout }}"
+  when: system_reboot_needed
+
+- name: Gather facts after upgrade
+  setup:
+    filter: ansible_distribution*
+
+- name: OS version information after Upgrade
+  debug:
+    var: os_info_post_upgrade
+  vars:
+    os_info_post_upgrade:
+      distribution: "{{ ansible_distribution }}"
+      distribution_major_version: "{{ ansible_distribution_major_version }}"
+      distribution_release: "{{ ansible_distribution_release }}"
+      distribution_version: "{{ ansible_distribution_version }}"
+
+- block:
+  - name: reboot the system
+    become: yes
+    shell: "sleep 2 && shutdown -r now 'Rebooting (Ansible kernel update)'"
+    async: 1
+    poll: 0
+    ignore_errors: True
+
+  - name: wait for server to reboot
+    wait_for_connection:
+
+  - name: gather facts after reboot
+    setup:
+      filter: ansible_distribution*
+
+  - name: OS version information after reboot
+    debug:
+      var: os_info_post_upgrade
+    vars:
+      os_info_post_upgrade:
+        distribution: "{{ ansible_distribution }}"
+        distribution_major_version: "{{ ansible_distribution_major_version }}"
+        distribution_release: "{{ ansible_distribution_release }}"
+        distribution_version: "{{ ansible_distribution_version }}"
+  when: upgrade_reboot_kernel and system_reboot_needed
