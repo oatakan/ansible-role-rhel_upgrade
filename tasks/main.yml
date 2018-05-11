@@ -68,6 +68,10 @@
     poll: 0
     ignore_errors: True
 
+  - name: pause 10 seconds for reboot to take place
+    pause:
+      seconds: 10
+
   - name: wait for server to reboot
     wait_for_connection:
 
