@@ -17,11 +17,10 @@
 - name: upgrade packages
   become: yes
   yum:
-    name: "{{ item }}"
+    name: "{{ upgrade_distro_packages | default('*') }}"
     exclude: "{{ upgrade_distro_packages_excludes | join(',') }}"
     state: latest
     update_cache: yes
-  with_items: "{{ upgrade_distro_packages | default('*') }}"
 
 - name: find the current running kernel version
   command: uname -r
