@@ -7,4 +7,3 @@ upgrade_distro_packages_excludes: []
 
 # reboot if required
 upgrade_reboot_kernel: no
-

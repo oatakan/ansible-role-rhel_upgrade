@@ -1,14 +1,10 @@
 ---
 galaxy_info:
-  author: Orcun Atakan
-  min_ansible_version: 1.9
+  author: Orcun Atakan (oatakan@redhat.com)
   description: Ansible galaxy role for upgrading RHEL systemt to the latest version
-  company: Red Hat
-
-  license: license (GPLv2, CC-BY, etc)
-
-  min_ansible_version: 1.2
-
+  company: "Red Hat"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 2.6
   platforms:
     - name: EL
       versions:
