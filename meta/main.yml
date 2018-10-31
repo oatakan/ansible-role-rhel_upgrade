@@ -9,10 +9,6 @@ galaxy_info:
     - name: EL
       versions:
         - all
-
-  categories:
-  - all
-
   galaxy_tags:
     - rhel
     - os
