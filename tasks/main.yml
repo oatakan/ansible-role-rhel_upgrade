@@ -60,19 +60,22 @@
       distribution_version: "{{ ansible_distribution_version }}"
 
 - block:
+#  - name: reboot the system
+#    become: yes
+#    shell: "sleep 2 && shutdown -r now 'Rebooting (Ansible kernel update)'"
+#    async: 1
+#    poll: 0
+#    ignore_errors: True
+#
+#  - name: pause 10 seconds for reboot to take place
+#    pause:
+#      seconds: 10
+#
+#  - name: wait for server to reboot
+#    wait_for_connection:
+
   - name: reboot the system
-    become: yes
-    shell: "sleep 2 && shutdown -r now 'Rebooting (Ansible kernel update)'"
-    async: 1
-    poll: 0
-    ignore_errors: True
-
-  - name: pause 10 seconds for reboot to take place
-    pause:
-      seconds: 10
-
-  - name: wait for server to reboot
-    wait_for_connection:
+    reboot:
 
   - name: gather facts after reboot
     setup:
