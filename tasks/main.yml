@@ -23,6 +23,7 @@
     exclude: "{{ upgrade_distro_packages_excludes | join(',') }}"
     state: latest
     update_cache: yes
+  ignore_errors: yes
 
 - name: find the current running kernel version
   command: uname -r
