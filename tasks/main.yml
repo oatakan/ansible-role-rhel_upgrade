@@ -80,6 +80,7 @@
 
   - name: reboot the system
     reboot:
+      reboot_timeout: "{{ reboot_timeout }}"
 
   - name: gather facts after reboot
     setup:
