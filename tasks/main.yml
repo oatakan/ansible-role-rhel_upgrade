@@ -85,7 +85,7 @@
 
 - debug:
     msg: "Reboot needed (kernel): Current:{{ ansible_kernel }} Latest:{{ latest_kernel_version }}"
-  when: system_reboot_needed
+  when: system_reboot_needed | bool
 
 - block:
     - name: reboot the system
