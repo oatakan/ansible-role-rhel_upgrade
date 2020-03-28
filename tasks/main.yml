@@ -69,7 +69,7 @@
 
 - name: set latest installed kernel version
   set_fact:
-    latest_kernel_version: "{{ packages_list_post_update.ansible_facts.packages.kernel[0].version }}-{{ packages_list_post_update.ansible_facts.packages.kernel[0].release }}.{{ packages_list_post_update.ansible_facts.packages.kernel[0].arch }}"
+    latest_kernel_version: "{{ packages_list_post_update.ansible_facts.packages.kernel[-1].version }}-{{ packages_list_post_update.ansible_facts.packages.kernel[-1].release }}.{{ packages_list_post_update.ansible_facts.packages.kernel[-1].arch }}"
 
 - name: show current kernel version
   debug:
