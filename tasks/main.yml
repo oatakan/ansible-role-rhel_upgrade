@@ -18,6 +18,7 @@
 - name: packages before update
   debug:
     msg: "{{ packages_list_pre_update }}"
+    verbosity: 3
 
 - name: ensure deltarpm installed
   yum:
