@@ -35,7 +35,7 @@
 - name: check for missing updates
   yum:
     list: updates
-  become: yes
+  become: true
   register: available_updates
 
 - debug:
@@ -51,15 +51,15 @@
     name: "{{ update_distro_packages | default('*') }}"
     exclude: "{{ update_distro_packages_excludes | join(',') }}"
     state: latest
-    update_cache: yes
-    skip_broken: yes
-  become: yes
-  ignore_errors: yes
+    update_cache: true
+    skip_broken: true
+  become: true
+  ignore_errors: true
 
 - name: check for missing updates
   yum:
     list: updates
-  become: yes
+  become: true
   register: available_updates
 
 - debug:
