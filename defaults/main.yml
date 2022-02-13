@@ -9,3 +9,5 @@ update_distro_packages_excludes: []
 update_reboot_kernel: no
 
 reboot_timeout: 600
+
+centos_eol_vault_fix: yes  #temporary fix for CentOS systems before migration

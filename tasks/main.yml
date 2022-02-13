@@ -1,4 +1,10 @@
 ---
+
+- include_tasks: centos_eol_fix.yml
+  when:
+    - ansible_distribution == 'CentOS'
+    - centos_eol_vault_fix|bool
+
 - name: set pre update os_info
   set_fact:
     os_info_pre_update:

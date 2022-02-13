@@ -1,0 +1,21 @@
+---
+
+- name: find CentOS repo files
+  find:
+    paths: /etc/yum.repos.d
+    patterns: 'CentOS-Linux-*'
+  register: centos_repo_files
+
+- name: comment mirrorlist
+  ansible.builtin.replace:
+    path: "{{ item.path }}"
+    regexp: '^(mirrorlist.*)$'
+    replace: '#\1'
+  loop: "{{ centos_repo_files.files }}"
+
+- name: update baseurl
+  ansible.builtin.replace:
+    path: "{{ item.path }}"
+    regexp: '^#(baseurl=http://)mirror.centos.org(.*)$'
+    replace: '\1vault.centos.org\2'
+  loop: "{{ centos_repo_files.files }}"
