@@ -1,7 +1,7 @@
 ---
 
 - name: find CentOS repo files
-  find:
+  ansible.builtin.find:
     paths: /etc/yum.repos.d
     patterns: 'CentOS-Linux-*'
   register: centos_repo_files

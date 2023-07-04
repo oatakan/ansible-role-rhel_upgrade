@@ -1,0 +1,6 @@
+skip_list:
+  - 'key-order[task]'
+  - 'name[casing]'
+  - 'package-latest'
+  - 'ignore-errors'
+  - 'role-name'

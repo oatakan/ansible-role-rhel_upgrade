@@ -10,4 +10,4 @@ update_reboot_kernel: false
 
 reboot_timeout: 600
 
-centos_eol_vault_fix: true  #temporary fix for CentOS systems before migration
+centos_eol_vault_fix: true  # temporary fix for CentOS systems before migration

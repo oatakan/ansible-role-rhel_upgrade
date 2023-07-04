@@ -1,5 +1,6 @@
 ---
 galaxy_info:
+  namespace: oatakan
   author: Orcun Atakan (oatakan@redhat.com)
   description: Ansible galaxy role for upgrading RHEL system to the latest version
   role_name: rhel_upgrade
