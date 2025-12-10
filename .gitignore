@@ -1,0 +1,21 @@
+# AI Automation
+.github/scripts/__pycache__/
+.github/scripts/*.pyc
+.github/scripts/.env
+/tmp/github_output
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+*.py[cod]
+__pycache__/
+venv/
+.env
+
+# Ansible
+*.retry
+.ansible/
