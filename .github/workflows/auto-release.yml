@@ -5,6 +5,15 @@ on:
   push:
     branches: [main, master]
     paths-ignore:
+      - '.github/**'
+      - 'molecule/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - '.ansible-lint'
+      - '.yamllint'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - 'test-locally.sh'
       - 'CHANGELOG.md'
       - 'docs/**'
       - '*.md'
@@ -60,11 +69,24 @@ jobs:
           CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
           echo "Changed files: $CHANGED_FILES"
 
-          NON_DOC_CHANGES=$(echo "$CHANGED_FILES" | grep -v -E '\.(md|txt)$|^docs/|^CHANGELOG|^\.github/workflows/post-release' | wc -l)
+          IGNORE_REGEX='\.(md|rst|txt)$'
+          IGNORE_REGEX+='|^docs/'
+          IGNORE_REGEX+='|^CHANGELOG\.md$'
+          IGNORE_REGEX+='|^\.github/'
+          IGNORE_REGEX+='|^molecule/'
+          IGNORE_REGEX+='|^tests/'
+          IGNORE_REGEX+='|^scripts/'
+          IGNORE_REGEX+='|^\.ansible-lint$'
+          IGNORE_REGEX+='|^\.yamllint$'
+          IGNORE_REGEX+='|^pyproject\.toml$'
+          IGNORE_REGEX+='|^requirements.*\.txt$'
+          IGNORE_REGEX+='|^test-locally\.sh$'
+
+          NON_DOC_CHANGES=$(echo "$CHANGED_FILES" | grep -v -E "$IGNORE_REGEX" | wc -l)
 
           if [[ $NON_DOC_CHANGES -eq 0 ]] && [[ -n "$CHANGED_FILES" ]]; then
             echo "should_skip=true" >> $GITHUB_OUTPUT
-            echo "skip_reason=docs_only" >> $GITHUB_OUTPUT
+            echo "skip_reason=non_release_only" >> $GITHUB_OUTPUT
             exit 0
           fi
 
