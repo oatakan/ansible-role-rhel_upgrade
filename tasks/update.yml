@@ -1,8 +1,8 @@
 ---
 - name: Update packages (strict first, permissive rescue if allowed)
   block:
-    - name: Update packages - strict mode
-      ansible.builtin.yum:
+    - name: Update packages - strict mode (dnf)
+      ansible.builtin.dnf:
         name: "{{ update_distro_packages | default('*') }}"
         exclude: "{{ update_distro_packages_excludes | join(',') }}"
         state: latest
@@ -11,10 +11,24 @@
         allowerasing: false
       become: true
       register: strict_update_result
+      when: ansible_distribution_major_version|int >= 8
+
+    - name: Update packages - strict mode (yum)
+      ansible.builtin.yum: # noqa fqcn[action-core]
+        name: "{{ update_distro_packages | default('*') }}"
+        exclude: "{{ update_distro_packages_excludes | join(',') }}"
+        state: latest
+        update_cache: true
+        skip_broken: true
+      become: true
+      register: strict_update_result
+      when: ansible_distribution_major_version|int < 8
 
   rescue:
     - name: Upgrade conflict detected - attempting with allowerasing
-      when: force_allow_erasing | default(false) | bool
+      when:
+        - force_allow_erasing | default(false) | bool
+        - ansible_distribution_major_version|int >= 8
       block:
         - name: Clean DNF metadata before forced upgrade
           ansible.builtin.command: dnf clean all
@@ -22,7 +36,7 @@
           changed_when: false
 
         - name: Update packages - allow erasing (rescue mode)
-          ansible.builtin.yum:
+          ansible.builtin.dnf:
             name: "{{ update_distro_packages | default('*') }}"
             exclude: "{{ update_distro_packages_excludes | join(',') }}"
             state: latest
@@ -41,6 +55,6 @@
               force_allow_erasing variable once provisioning is completed.
 
     - name: Fail if force_allow_erasing is not enabled
-      when: not (force_allow_erasing | default(false) | bool)
+      when: not (force_allow_erasing | default(false) | bool) or ansible_distribution_major_version|int < 8
       ansible.builtin.fail:
         msg: "Package update failed due to dependency conflict. Set force_allow_erasing=true to allow resolution."

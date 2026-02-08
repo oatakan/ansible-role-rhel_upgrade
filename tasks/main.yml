@@ -28,16 +28,25 @@
     verbosity: 3
 
 - name: ensure deltarpm installed
-  ansible.builtin.yum:
+  ansible.builtin.package:
     name: deltarpm
     state: present
+  become: true
   when: ansible_distribution_major_version|int < 8
 
-- name: check for missing updates
-  ansible.builtin.yum:
+- name: check for missing updates (dnf)
+  ansible.builtin.dnf:
     list: updates
   become: true
   register: available_updates
+  when: ansible_distribution_major_version|int >= 8
+
+- name: check for missing updates (yum)
+  ansible.builtin.yum: # noqa fqcn[action-core]
+    list: updates
+  become: true
+  register: available_updates
+  when: ansible_distribution_major_version|int < 8
 
 - name: show available updates
   ansible.builtin.debug:
@@ -53,11 +62,19 @@
 - name: update packages
   ansible.builtin.include_tasks: update.yml
 
-- name: check for missing updates
-  ansible.builtin.yum:
+- name: check for missing updates (dnf)
+  ansible.builtin.dnf:
     list: updates
   become: true
   register: available_updates
+  when: ansible_distribution_major_version|int >= 8
+
+- name: check for missing updates (yum)
+  ansible.builtin.yum: # noqa fqcn[action-core]
+    list: updates
+  become: true
+  register: available_updates
+  when: ansible_distribution_major_version|int < 8
 
 - name: show available updates
   ansible.builtin.debug:
