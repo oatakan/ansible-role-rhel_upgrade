@@ -4,18 +4,52 @@
 .github/scripts/.env
 /tmp/github_output
 
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
 # IDE
 .idea/
 .vscode/
+*.iml
+.project
+.classpath
+.settings/
+.history/
 *.swp
 *.swo
+
+# Editor/OS cruft
+*~
+*.tmp
+*.bak
 
 # Python
 *.py[cod]
 __pycache__/
+*.egg-info/
+.eggs/
+dist/
+build/
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
 venv/
+.venv/
+.python-version
 .env
+.env.*
 
 # Ansible
 *.retry
 .ansible/
+.cache/
+ansible.log
+*.log

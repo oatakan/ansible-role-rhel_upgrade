@@ -1,0 +1,19 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Can connect to the instance
+      ansible.builtin.ping:
+
+    - name: Role set expected facts
+      ansible.builtin.assert:
+        that:
+          - os_info_pre_update is defined
+          - latest_kernel_version is defined
+          - system_reboot_needed is defined
+        success_msg: 'Role facts look present'
+
+    - name: Show reboot-needed decision
+      ansible.builtin.debug:
+        msg: "system_reboot_needed={{ system_reboot_needed }}, current={{ ansible_kernel }}, latest={{ latest_kernel_version }}"

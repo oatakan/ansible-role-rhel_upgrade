@@ -51,14 +51,7 @@
   when: available_updates.results is defined
 
 - name: update packages
-  ansible.builtin.yum:
-    name: "{{ update_distro_packages | default('*') }}"
-    exclude: "{{ update_distro_packages_excludes | join(',') }}"
-    state: latest
-    update_cache: true
-    skip_broken: true
-  become: true
-  ignore_errors: true
+  ansible.builtin.include_tasks: update.yml
 
 - name: check for missing updates
   ansible.builtin.yum:

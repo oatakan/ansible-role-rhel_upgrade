@@ -1,0 +1,16 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    update_reboot_kernel: false
+
+  pre_tasks:
+    - name: Update package cache
+      ansible.builtin.package:
+        update_cache: true
+      when: ansible_os_family == 'RedHat'
+
+  roles:
+    - role: oatakan.rhel_upgrade

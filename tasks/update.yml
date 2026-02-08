@@ -1,0 +1,46 @@
+---
+- name: Update packages (strict first, permissive rescue if allowed)
+  block:
+    - name: Update packages - strict mode
+      ansible.builtin.yum:
+        name: "{{ update_distro_packages | default('*') }}"
+        exclude: "{{ update_distro_packages_excludes | join(',') }}"
+        state: latest
+        update_cache: true
+        skip_broken: true
+        allowerasing: false
+      become: true
+      register: strict_update_result
+
+  rescue:
+    - name: Upgrade conflict detected - attempting with allowerasing
+      when: force_allow_erasing | default(false) | bool
+      block:
+        - name: Clean DNF metadata before forced upgrade
+          ansible.builtin.command: dnf clean all
+          become: true
+          changed_when: false
+
+        - name: Update packages - allow erasing (rescue mode)
+          ansible.builtin.yum:
+            name: "{{ update_distro_packages | default('*') }}"
+            exclude: "{{ update_distro_packages_excludes | join(',') }}"
+            state: latest
+            update_cache: true
+            skip_broken: true
+            allowerasing: true
+          become: true
+          register: force_update_result
+
+        - name: Warning - erasing was required
+          ansible.builtin.debug:
+            msg: >
+              WARNING: Package update required allowerasing=true to succeed.
+              This is typically caused by transitional dependency conflicts.
+              The update completed anyway. You can now safely remove the
+              force_allow_erasing variable once provisioning is completed.
+
+    - name: Fail if force_allow_erasing is not enabled
+      when: not (force_allow_erasing | default(false) | bool)
+      ansible.builtin.fail:
+        msg: "Package update failed due to dependency conflict. Set force_allow_erasing=true to allow resolution."
