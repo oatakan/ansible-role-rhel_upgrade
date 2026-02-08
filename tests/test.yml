@@ -1,7 +1,9 @@
 ---
 
-- name: up
-- hosts: localhost
-  remote_user: root
+- name: smoke
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: true
   roles:
-    - oatakan.rhel_upgrade
+    - role: oatakan.rhel_upgrade

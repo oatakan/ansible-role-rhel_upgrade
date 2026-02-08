@@ -1,0 +1,121 @@
+---
+# AI Configuration for GitHub Automation
+
+# Provider priority (first available will be used)
+provider_priority:
+  - openai
+  - anthropic
+
+# Model configurations per provider
+providers:
+  openai:
+    # Default model for most tasks - excellent price/performance
+    default_model: "gpt-5-mini"
+
+    # Model selection by task complexity
+    models:
+      simple: "gpt-5-mini"      # Cheapest good default for automation tasks
+      standard: "gpt-5-mini"    # PR analysis, code review, changelog, docs
+      complex: "gpt-5-mini"     # Keep costs predictable; bump manually if needed
+
+    # Model-specific parameters
+    parameters:
+      "gpt-5-mini":
+        max_tokens: 1500
+        temperature: 0.3
+        timeout: 30
+      # If you decide to use a larger GPT-5.x model for complex tasks later,
+      # add it here with higher max_tokens/timeout.
+
+    # Cost per 1K tokens (approximate, for reference)
+    pricing:
+      "gpt-5-mini":
+        input: 0.00025   # $0.25 per 1M tokens
+        output: 0.002    # $2.00 per 1M tokens
+
+  anthropic:
+    # Default model for most tasks
+    default_model: "claude-3-5-haiku-20241022"
+
+    # Model selection by task complexity
+    models:
+      simple: "claude-3-5-haiku-20241022"   # Fast and cheap
+      standard: "claude-3-5-haiku-20241022" # Good for most tasks
+      complex: "claude-3-5-sonnet-20241022" # Better reasoning
+
+    # Model-specific parameters
+    parameters:
+      "claude-3-5-haiku-20241022":
+        max_tokens: 1500
+        temperature: 0.3
+        timeout: 30
+      "claude-3-5-sonnet-20241022":
+        max_tokens: 2000
+        temperature: 0.3
+        timeout: 45
+
+    # Cost per 1K tokens (approximate, for reference)
+    pricing:
+      "claude-3-5-haiku-20241022":
+        input: 0.00025   # $0.25 per 1M tokens
+        output: 0.00125  # $1.25 per 1M tokens
+      "claude-3-5-sonnet-20241022":
+        input: 0.003     # $3.00 per 1M tokens
+        output: 0.015    # $15.00 per 1M tokens
+
+# Task-specific model assignments
+task_models:
+  release_analysis:
+    complexity: standard
+    description: "Analyze commits and determine version bumps"
+
+  pr_analysis:
+    complexity: standard
+    description: "Analyze PR changes and provide insights"
+
+  code_review:
+    complexity: standard
+    description: "Review individual files for best practices"
+
+  documentation_update:
+    complexity: simple
+    description: "Update documentation with new variables"
+
+  release_notes:
+    complexity: standard
+    description: "Generate engaging release notes"
+
+  changelog_generation:
+    complexity: simple
+    description: "Generate changelog entries"
+
+  test_scenarios:
+    complexity: standard
+    description: "Generate comprehensive test scenarios for PRs"
+
+  improvement_suggestions:
+    complexity: standard
+    description: "Suggest code quality and maintainability improvements"
+
+  documentation_analysis:
+    complexity: simple
+    description: "Analyze what documentation updates are needed"
+
+# Fallback behavior
+fallback:
+  # What to do if AI fails
+  on_failure: "rule_based"  # Options: rule_based, skip, error
+
+  # Retry configuration
+  max_retries: 2
+  retry_delay: 5  # seconds
+
+  # Rate limiting
+  requests_per_minute: 20
+
+# Debug settings
+debug:
+  log_tokens: false          # Log token usage
+  log_prompts: false         # Log full prompts (security risk)
+  log_responses: false       # Log AI responses
+  estimate_costs: true       # Show cost estimates

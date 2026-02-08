@@ -1,0 +1,49 @@
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: molecule/vagrant/requirements.yml
+
+driver:
+  name: vagrant
+  provider:
+    name: virtualbox
+
+platforms:
+  - name: instance
+    box: ${MOLECULE_VAGRANT_BOX:-generic/rocky9}
+    memory: 2048
+    cpus: 2
+    instance_raw_config_args:
+      - "vm.provision 'shell', inline: 'sudo dnf -y install python3'"
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      interpreter_python: auto_silent
+      stdout_callback: yaml
+      retry_files_enabled: false
+    ssh_connection:
+      pipelining: true
+  inventory:
+    host_vars:
+      instance:
+        ansible_user: vagrant
+        ansible_become: true
+  playbooks:
+    converge: ${MOLECULE_SCENARIO_DIRECTORY}/converge.yml
+    verify: ${MOLECULE_SCENARIO_DIRECTORY}/verify.yml
+
+verifier:
+  name: ansible
+
+scenario:
+  name: vagrant
+  test_sequence:
+    - dependency
+    - syntax
+    - create
+    - converge
+    - verify
+    - destroy

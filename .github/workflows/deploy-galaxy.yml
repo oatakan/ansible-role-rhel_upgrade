@@ -1,0 +1,94 @@
+---
+name: Deploy to Ansible Galaxy
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name (e.g., v1.0.0)'
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag_name || github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install ansible-core
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core
+
+      - name: Get the version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${{ github.event.inputs.tag_name || 'master' }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify role metadata
+        run: |
+          test -f meta/main.yml
+          echo "✓ meta/main.yml exists"
+
+      - name: Import role to Galaxy
+        env:
+          ANSIBLE_GALAXY_API_KEY: ${{ secrets.ANSIBLE_GALAXY_API_KEY }}
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          REPO_ONLY="${{ github.event.repository.name }}"
+
+          echo "Importing role to Ansible Galaxy..."
+          echo "Owner: $OWNER"
+          echo "Repo:  $REPO_ONLY"
+
+          ansible-galaxy role import \
+            --api-key="${ANSIBLE_GALAXY_API_KEY}" \
+            "$OWNER" "$REPO_ONLY"
+
+      - name: Wait for Galaxy processing
+        run: |
+          echo "Waiting 60 seconds for Galaxy to process the import..."
+          sleep 60
+
+      - name: Verify Galaxy import
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          ROLE_NAME="rhel_upgrade"
+
+          if ansible-galaxy role info "${OWNER}.${ROLE_NAME}" > /dev/null 2>&1; then
+            echo "✅ Role successfully imported and available on Galaxy"
+            ansible-galaxy role info "${OWNER}.${ROLE_NAME}"
+          else
+            echo "⚠️ Role import may still be processing. Check manually at:"
+            echo "https://galaxy.ansible.com/${OWNER}/${ROLE_NAME}"
+          fi
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            ```bash
+            ansible-galaxy install ${{ github.repository_owner }}.rhel_upgrade,${{ steps.get_version.outputs.VERSION }}
+            ```
