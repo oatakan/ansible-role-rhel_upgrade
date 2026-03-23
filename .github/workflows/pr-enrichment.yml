@@ -66,7 +66,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           python .github/scripts/ai_pr_assistant.py \
-            --pr-number ${{ github.event.issue.number }} \
-            --comment "${{ github.event.comment.body }}"
+            --pr-number "$PR_NUMBER" \
+            --comment "$COMMENT_BODY"
