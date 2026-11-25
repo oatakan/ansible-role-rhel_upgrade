@@ -13,3 +13,6 @@ reboot_timeout: 600
 centos_eol_vault_fix: true  # temporary fix for CentOS systems before migration
 
 force_allow_erasing: false  # set to true to allow package updates that require erasing conflicting packages (use with caution)
+
+# Use native rpm/dnf commands on EL8 when Python package bindings are unavailable.
+use_native_el8_package_tools: false
