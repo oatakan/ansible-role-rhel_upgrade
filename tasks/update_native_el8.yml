@@ -1,0 +1,39 @@
+---
+- name: Upgrade EL8 packages with native DNF
+  when: not ansible_check_mode
+  vars:
+    native_el8_selectors: >-
+      {{
+        update_distro_packages.split(',')
+        if update_distro_packages is string
+        else update_distro_packages
+      }}
+    native_el8_dnf_options: >-
+      {{
+        ['/usr/bin/dnf', '--assumeyes', '--refresh', '--skip-broken']
+        + (['--exclude=' ~ (update_distro_packages_excludes | join(','))]
+           if update_distro_packages_excludes | length > 0 else [])
+      }}
+  block:
+    - name: Run strict native DNF upgrade
+      ansible.builtin.command:
+        argv: "{{ native_el8_dnf_options + ['upgrade', '--'] + native_el8_selectors }}"
+      become: true
+      changed_when: false
+  rescue:
+    - name: Require explicit permission for the erasing retry
+      ansible.builtin.assert:
+        that: force_allow_erasing | bool
+        fail_msg: Native DNF upgrade failed and an erasing retry is disabled.
+
+    - name: Clear DNF metadata before the erasing retry
+      ansible.builtin.command:
+        argv: [/usr/bin/dnf, clean, all]
+      become: true
+      changed_when: false
+
+    - name: Run the permitted native DNF retry
+      ansible.builtin.command:
+        argv: "{{ native_el8_dnf_options + ['--allowerasing', 'upgrade', '--'] + native_el8_selectors }}"
+      become: true
+      changed_when: false

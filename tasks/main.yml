@@ -21,6 +21,15 @@
 - name: gather the package facts
   ansible.builtin.package_facts:
   register: packages_list_pre_update
+  when: not (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
+
+- name: Gather installed RPMs before update (native EL8)
+  ansible.builtin.command:
+    argv: [/usr/bin/rpm, -qa, --qf, "%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\n"]
+  register: native_packages_pre_update
+  changed_when: false
+  check_mode: false
+  when: (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
 
 - name: packages before update
   ansible.builtin.debug:
@@ -39,7 +48,26 @@
     list: updates
   become: true
   register: available_updates
-  when: ansible_distribution_major_version|int >= 8
+  when:
+    - ansible_distribution_major_version|int >= 8
+    - not (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
+
+- name: Check for missing updates (native EL8)
+  ansible.builtin.command:
+    argv: [dnf, check-update]
+  environment:
+    LC_ALL: C
+  become: true
+  register: native_available_updates
+  changed_when: false
+  failed_when: native_available_updates.rc not in [0, 100]
+  check_mode: false
+  when: (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
+
+- name: Show available native updates
+  ansible.builtin.debug:
+    var: native_available_updates.stdout_lines
+  when: (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
 
 - name: check for missing updates (yum)
   ansible.builtin.yum: # noqa fqcn[action-core]
@@ -59,15 +87,39 @@
       {% endfor %}
   when: available_updates.results is defined
 
-- name: update packages
+- name: Update packages through the existing module path
   ansible.builtin.include_tasks: update.yml
+  when: not (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
+
+- name: Update packages through native EL8 DNF
+  ansible.builtin.include_tasks: update_native_el8.yml
+  when: use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8
 
 - name: check for missing updates (dnf)
   ansible.builtin.dnf:
     list: updates
   become: true
   register: available_updates
-  when: ansible_distribution_major_version|int >= 8
+  when:
+    - ansible_distribution_major_version|int >= 8
+    - not (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
+
+- name: Check for missing updates (native EL8)
+  ansible.builtin.command:
+    argv: [dnf, check-update]
+  environment:
+    LC_ALL: C
+  become: true
+  register: native_available_updates
+  changed_when: false
+  failed_when: native_available_updates.rc not in [0, 100]
+  check_mode: false
+  when: (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
+
+- name: Show available native updates
+  ansible.builtin.debug:
+    var: native_available_updates.stdout_lines
+  when: (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
 
 - name: check for missing updates (yum)
   ansible.builtin.yum: # noqa fqcn[action-core]
@@ -90,10 +142,45 @@
 - name: gather the package facts
   ansible.builtin.package_facts:
   register: packages_list_post_update
+  when: not (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
+
+- name: Gather installed RPMs after update (native EL8)
+  ansible.builtin.command:
+    argv: [/usr/bin/rpm, -qa, --qf, "%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\n"]
+  register: native_packages_post_update
+  changed_when: false
+  check_mode: false
+  when: (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
+
+- name: Report whether the native package transaction changed installed packages
+  ansible.builtin.debug:
+    msg: "{{ 'Installed RPMs changed.' if native_el8_packages_changed else 'Installed RPMs match the pre-update state.' }}"
+  vars:
+    native_el8_packages_changed: >-
+      {{
+        (native_packages_pre_update.stdout_lines | sort)
+        != (native_packages_post_update.stdout_lines | sort)
+      }}
+  changed_when: native_el8_packages_changed | bool
+  when: use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8
+
+- name: Query installed kernels (native EL8)
+  ansible.builtin.command:
+    argv: [rpm, -q, kernel, --qf, "%{VERSION}-%{RELEASE}.%{ARCH}\n"]
+  register: native_kernels
+  changed_when: false
+  check_mode: false
+  when: (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
+
+- name: Set latest installed kernel version (native EL8)
+  ansible.builtin.set_fact:
+    latest_kernel_version: "{{ native_kernels.stdout_lines[-1] }}"
+  when: (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
 
 - name: set latest installed kernel version
   ansible.builtin.set_fact:
     latest_kernel_version: "{{ _version }}-{{ _release }}.{{ _arch }}"
+  when: not (use_native_el8_package_tools | bool and ansible_distribution_major_version | int == 8)
   vars:
     _version: "{{ packages_list_post_update.ansible_facts.packages.kernel[-1].version }}"
     _release: "{{ packages_list_post_update.ansible_facts.packages.kernel[-1].release }}"
